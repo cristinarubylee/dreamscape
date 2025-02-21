@@ -1,9 +1,10 @@
-package io.github.cristinarubylee;
+package io.github.cristinarubylee.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.utils.ScreenUtils;
+import io.github.cristinarubylee.GDXRoot;
 
 public class MainMenuScreen implements Screen {
 

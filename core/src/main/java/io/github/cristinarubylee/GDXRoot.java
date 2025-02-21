@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import io.github.cristinarubylee.screens.MainMenuScreen;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class GDXRoot extends Game {
@@ -18,7 +19,7 @@ public class GDXRoot extends Game {
         batch = new SpriteBatch();
         // use libGDX's default font
         font = new BitmapFont();
-        viewport = new FitViewport(8, 5);
+        viewport = new FitViewport(16, 10);
 
         //font has 15pt, but we need to scale it to our viewport by ratio of viewport height to screen height
         font.setUseIntegerPositions(false);

@@ -1,4 +1,4 @@
-package io.github.cristinarubylee;
+package io.github.cristinarubylee.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -8,13 +8,13 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import io.github.cristinarubylee.GDXRoot;
+import io.github.cristinarubylee.controllers.InputController;
 
 public class FirstScreen implements Screen {
     final GDXRoot game;
@@ -31,6 +31,7 @@ public class FirstScreen implements Screen {
     Rectangle bucketRectangle;
     Rectangle dropRectangle;
     int dropsGathered;
+    InputController control;
 
     public FirstScreen(final GDXRoot game) {
         this.game = game;
@@ -48,6 +49,7 @@ public class FirstScreen implements Screen {
 
         bucketSprite = new Sprite(bucketTexture);
         bucketSprite.setSize(1, 1);
+        bucketSprite.setX(1);
 
         touchPos = new Vector2();
 
@@ -55,6 +57,8 @@ public class FirstScreen implements Screen {
         dropRectangle = new Rectangle();
 
         dropSprites = new Array<>();
+
+        control = new InputController();
     }
 
     @Override
@@ -72,21 +76,22 @@ public class FirstScreen implements Screen {
     }
 
     private void input() {
+        control.readInput();
         float speed = 4f;
         float delta = Gdx.graphics.getDeltaTime();
 
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            bucketSprite.translateX(speed * delta);
+        if (control.getMovement() > 0) {
+            bucketSprite.translateY(speed * delta);
         }
-        else if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            bucketSprite.translateX(-speed * delta);
+        else if (control.getMovement() < 0) {
+            bucketSprite.translateY(-speed * delta);
         }
 
-        if (Gdx.input.isTouched()) {
-            touchPos.set(Gdx.input.getX(), Gdx.input.getY());
-            game.viewport.unproject(touchPos);
-            bucketSprite.setCenterX(touchPos.x);
-        }
+//        if (Gdx.input.isTouched()) {
+//            touchPos.set(Gdx.input.getX(), Gdx.input.getY());
+//            game.viewport.unproject(touchPos);
+//            bucketSprite.setCenterX(touchPos.x);
+//        }
     }
 
     private void logic() {
@@ -96,7 +101,7 @@ public class FirstScreen implements Screen {
         float bucketHeight = bucketSprite.getHeight();
         float delta = Gdx.graphics.getDeltaTime();
 
-        bucketSprite.setX(MathUtils.clamp(bucketSprite.getX(), 0, worldWidth - bucketWidth));
+        bucketSprite.setY(MathUtils.clamp(bucketSprite.getY(), 0, worldHeight - bucketHeight));
         bucketRectangle.set(bucketSprite.getX(), bucketSprite.getY(), bucketWidth, bucketHeight);
 
         for (int i = dropSprites.size - 1; i >= 0; i--) {
@@ -104,10 +109,10 @@ public class FirstScreen implements Screen {
             float dropWidth = dropSprite.getWidth();
             float dropHeight = dropSprite.getHeight();
 
-            dropSprite.translateY(-2f * delta);
+            dropSprite.translateX(-2f * delta);
             dropRectangle.set(dropSprite.getX(), dropSprite.getY(), dropWidth, dropHeight);
 
-            if (dropSprite.getY() < -dropHeight) dropSprites.removeIndex(i);
+            if (dropSprite.getY() < -dropWidth) dropSprites.removeIndex(i);
             else if (bucketRectangle.overlaps(dropRectangle)) {
                 dropsGathered++;
                 dropSprites.removeIndex(i);
@@ -151,8 +156,8 @@ public class FirstScreen implements Screen {
 
         Sprite dropSprite = new Sprite(dropTexture);
         dropSprite.setSize(dropWidth, dropHeight);
-        dropSprite.setX(MathUtils.random(0F, worldWidth - dropWidth));
-        dropSprite.setY(worldHeight);
+        dropSprite.setX(worldWidth);
+        dropSprite.setY(MathUtils.random(0F, worldHeight - dropHeight));
         dropSprites.add(dropSprite);
     }
 
