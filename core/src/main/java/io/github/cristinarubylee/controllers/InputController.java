@@ -9,9 +9,9 @@ public class InputController {
     private boolean pressedFire;
 
     //Positive vertical movement
-    private int[] posKeyCodes = {Input.Keys.UP, Input.Keys.RIGHT};
+    private int[] posKeyCodes = {Input.Keys.UP, Input.Keys.RIGHT, Input.Keys.W, Input.Keys.D};
     //Negative vertical movement
-    private int[] negKeyCodes = {Input.Keys.DOWN, Input.Keys.LEFT};
+    private int[] negKeyCodes = {Input.Keys.DOWN, Input.Keys.LEFT, Input.Keys.S, Input.Keys.A};
     //Firing
     private int[] fireKeyCodes = {Input.Keys.SPACE};
 
@@ -76,7 +76,7 @@ public class InputController {
             }
         }
 
-        // Mouse fire input
-        pressedFire = pressedFire || Gdx.input.isButtonPressed(Input.Buttons.LEFT);
+//        // Mouse fire input
+//        pressedFire = pressedFire || Gdx.input.isButtonPressed(Input.Buttons.LEFT);
     }
 }
