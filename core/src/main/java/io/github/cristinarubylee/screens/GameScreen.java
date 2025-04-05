@@ -1,146 +1,240 @@
 package io.github.cristinarubylee.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.*;
+import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.*;
 import io.github.cristinarubylee.GDXRoot;
 import io.github.cristinarubylee.controllers.*;
 import io.github.cristinarubylee.models.*;
 
 public class GameScreen implements Screen {
-    final GDXRoot game;
+    // Constants
+    private static final float TIME_STEP = 1/60f;
+    private static final int VELOCITY_ITERATIONS = 8;
+    private static final int POSITION_ITERATIONS = 3;
+    private static final float PLAYER_SPEED = 4f;
+    private static final float NIGHTMARE_SPAWN_INTERVAL = 1f;
 
-    Texture backgroundTexture;
-    Texture bucketTexture;
-    Texture dropTexture;
-    Sound dropSound;
-    Music music;
-    float dropTimer;
+    // Game reference
+    private final GDXRoot game;
 
-    InputController control;
-    CollisionController collisionController;
-    ShapeRenderer shapeRenderer;
+    // Resources
+    private Texture backgroundTexture;
+    private Texture bucketTexture;
+    private Texture dropTexture;
+    private Sound dropSound;
+    private Music music;
 
-    Player player;
-    PhotonQueue photons;
-    Array<Nightmare> nightmares;
-    Array<GameObject> objects;
+    // Physics and rendering
+    private World world;
+    private CollisionController collisionController;
+    private Box2DDebugRenderer debugRenderer;
+    private OrthographicCamera camera;
+
+    // Game state
+    private float dropTimer;
+    private boolean debugMode;
+    private boolean pause;
+
+    // Controllers
+    private InputController control;
+
+    // Game objects
+    private Player player;
+    private PhotonQueue photons;
+    private Array<NightmareQueue> nightmareQueues;
+    private Array<Body> bodiesToDestroy;
+    private Array<GameObject> objects;
 
     public GameScreen(final GDXRoot game) {
         this.game = game;
+        initPhysics();
+        loadResources();
+        initGameObjects();
 
-        // Load images for the background, bucket, and droplet
+        debugMode = false;
+        pause = false;
+        bodiesToDestroy = new Array<>();
+    }
+
+    private void initPhysics() {
+        world = new World(new Vector2(0, 0), true);
+        collisionController = new CollisionController();
+        world.setContactListener(collisionController);
+        debugRenderer = new Box2DDebugRenderer();
+        camera = new OrthographicCamera(16, 10);
+        camera.position.set(8, 5, 0);
+        camera.update();
+    }
+
+    private void loadResources() {
+        // Load images
         backgroundTexture = new Texture("background.png");
         bucketTexture = new Texture("bucket.png");
         dropTexture = new Texture("drop.png");
 
-        // Load the drop sound effect and background music
+        // Load audio
         dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.mp3"));
         music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
         music.setLooping(true);
         music.setVolume(0.5f);
+    }
 
-        nightmares = new Array<>();
+    private void initGameObjects() {
         control = new InputController();
-        photons = new PhotonQueue(dropTexture);
 
-        player = new Player();
+        // Initialize player
+        player = new Player(world, 1, 5);
         player.setTexture(new TextureRegion(bucketTexture));
-        player.setX(1);
 
-        collisionController = new CollisionController(
-            game.viewport.getWorldWidth(),
-            game.viewport.getWorldHeight(),
-            1
-        );
-        shapeRenderer = new ShapeRenderer();
+        // Initialize projectiles and enemies
+        photons = new PhotonQueue(world, dropTexture);
+        nightmareQueues = new Array<>();
 
-        // Initialize list to store all GameObjects
+        // Initialize object tracking
         objects = new Array<>();
+        dropTimer = NIGHTMARE_SPAWN_INTERVAL;
     }
 
     @Override
     public void show() {
-        // Start the playback of the background music when the screen is shown
-        music.play();
+        // Uncomment to start music
+         music.play();
     }
 
     @Override
     public void render(float delta) {
+        camera.update();
+        game.batch.setProjectionMatrix(camera.combined);
+
         input();
-        logic();
+        logic(delta);
         draw();
+
+        // Process physics step
+        world.step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS);
+
+        // Clean up destroyed bodies after physics step
+        cleanupBodies();
+
+        if (debugMode) {
+            debugRenderer.render(world, camera.combined);
+        }
     }
 
     private void input() {
         control.readInput();
-        float speed = 4f;
         float delta = Gdx.graphics.getDeltaTime();
 
-        if (control.getMovement() > 0) {
-            player.translateY(speed * delta);
-        }
-        else if (control.getMovement() < 0) {
-            player.translateY(-speed * delta);
+        if (!pause) {
+            // Player movement
+            if (control.getMovement() > 0) {
+                player.translateY(PLAYER_SPEED * delta);
+            } else if (control.getMovement() < 0) {
+                player.translateY(-PLAYER_SPEED * delta);
+            }
+
+            // Player firing
+            if (control.didPressFire()) {
+                photons.fire(player.getX() + player.getWidth(), player.getY() + player.getHeight() / 2);
+            }
         }
 
-        if (control.didPressFire()) {
-            photons.fire(player.getX() + player.getWidth(), player.getY() + player.getHeight() / 2);
+        // Debug toggle
+        if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
+            debugMode = !debugMode;
         }
 
+        // Pause toggle
+        if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
+            pause = !pause;
+        }
     }
 
-    private void logic() {
+    private void logic(float deltaTime) {
+        if (pause) {
+            return;
+        }
+
         float worldWidth = game.viewport.getWorldWidth();
         float worldHeight = game.viewport.getWorldHeight();
         float playerHeight = player.getHeight();
-        float deltaTime = Gdx.graphics.getDeltaTime();
 
         // Clear objects list and add the player
-        objects = new Array<>();
+        objects.clear();
         objects.add(player);
 
         // Clamp player position within the screen bounds
         player.setY(MathUtils.clamp(player.getY(), 0, worldHeight - playerHeight));
+
+        // Update game objects
         updateNightmares(deltaTime);
         updatePhotons(deltaTime);
 
-        collisionController.processCollisions(objects);
-
-        // Spawn nightmares at intervals
-        dropTimer += deltaTime;
-        if (dropTimer > 1f) {
-            dropTimer = 0;
-            createNightmare();
-        }
+        // Handle spawning new nightmares
+        spawnNightmares(deltaTime, worldWidth, worldHeight);
     }
 
+    private void spawnNightmares(float deltaTime, float worldWidth, float worldHeight) {
+        // Spawn nightmares at intervals
+        dropTimer -= deltaTime;
+        if (dropTimer <= 0f) {
+            dropTimer = NIGHTMARE_SPAWN_INTERVAL;
 
-    private void updateNightmares(float deltaTime) {
-        for (int i = nightmares.size - 1; i >= 0; i--) {
-            Nightmare nightmare = nightmares.get(i);
-            nightmare.translateX(-2f * deltaTime);
-
-            if (nightmare.isDestroyed() || nightmare.getY() < -nightmare.getWidth()) {
-                nightmares.removeIndex(i);
-            } else {
-                objects.add(nightmare);
-            }
+            float centerY = MathUtils.random(2, worldHeight - 2);
+            nightmareQueues.add(new NightmareQueue(world, worldWidth + 1, centerY, NightmareQueue.NightmareType.CIRCLE));
         }
     }
 
     private void updatePhotons(float deltaTime) {
-        photons.update(deltaTime);
         for (Photon photon : photons.getPhotons()) {
-            objects.add(photon);
+            if (photon.isDestroyed()) {
+                markForDestruction(photon.body());
+            } else {
+                objects.add(photon);
+            }
         }
+
+        photons.update(deltaTime);
+    }
+
+    private void updateNightmares(float deltaTime) {
+        for (NightmareQueue nightmareQueue : nightmareQueues) {
+            for (Nightmare nightmare : nightmareQueue.getNightmares()) {
+                if (nightmare.isDestroyed()) {
+                    markForDestruction(nightmare.body());
+                } else {
+                    objects.add(nightmare);
+                }
+            }
+
+            nightmareQueue.update(deltaTime);
+        }
+    }
+
+    private void markForDestruction(Body body) {
+        if (body != null && !bodiesToDestroy.contains(body, true)) {
+            bodiesToDestroy.add(body);
+        }
+    }
+
+    private void cleanupBodies() {
+        // Remove bodies after physics step to avoid concurrent modification
+        for (Body body : bodiesToDestroy) {
+            if (body != null) {
+                world.destroyBody(body);
+            }
+        }
+        bodiesToDestroy.clear();
     }
 
     private void draw() {
@@ -153,37 +247,19 @@ public class GameScreen implements Screen {
         float worldWidth = game.viewport.getWorldWidth();
         float worldHeight = game.viewport.getWorldHeight();
 
+        // Draw background
         game.batch.draw(backgroundTexture, 0, 0, worldWidth, worldHeight);
+
+        // Draw UI elements
         game.font.draw(game.batch, "Player Health: " + player.getCurrHealth(), 0, worldHeight);
         game.font.draw(game.batch, "Total Objects: " + objects.size, 0, worldHeight - 1);
 
+        // Draw all game objects
         for (GameObject object : objects) {
             object.draw(game.batch);
         }
 
         game.batch.end();
-
-        // Draw colliders for debugging
-        shapeRenderer.setProjectionMatrix(game.viewport.getCamera().combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(Color.RED);
-        for (GameObject object : objects) {
-            Rectangle collider = object.getCollider();
-            shapeRenderer.rect(collider.x, collider.y, collider.width, collider.height);
-        }
-        shapeRenderer.end();
-    }
-
-    private void createNightmare() {
-        float worldWidth = game.viewport.getWorldWidth();
-        float worldHeight = game.viewport.getWorldHeight();
-
-        Nightmare nightmare = new Nightmare();
-        nightmare.setTexture(new TextureRegion(dropTexture));
-        nightmare.setSize(1, 1);
-        nightmare.setX(worldWidth);
-        nightmare.setY(MathUtils.random(0f, worldHeight - 1));
-        nightmares.add(nightmare);
     }
 
     @Override
@@ -192,23 +268,29 @@ public class GameScreen implements Screen {
     }
 
     @Override
-    public void hide() {
-    }
-
-    @Override
     public void pause() {
+        pause = true;
     }
 
     @Override
     public void resume() {
+        pause = false;
+    }
+
+    @Override
+    public void hide() {
+        // Called when this screen is no longer the current screen
     }
 
     @Override
     public void dispose() {
+        // Dispose of all resources to prevent memory leaks
         backgroundTexture.dispose();
         dropSound.dispose();
         music.dispose();
         dropTexture.dispose();
         bucketTexture.dispose();
+        world.dispose();
+        debugRenderer.dispose();
     }
 }

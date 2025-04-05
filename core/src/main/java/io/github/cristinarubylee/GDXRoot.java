@@ -4,6 +4,7 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.physics.box2d.Box2D;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import io.github.cristinarubylee.screens.MainMenuScreen;
 
@@ -16,6 +17,7 @@ public class GDXRoot extends Game {
 
 
     public void create() {
+        Box2D.init();
         batch = new SpriteBatch();
         // use libGDX's default font
         font = new BitmapFont();
