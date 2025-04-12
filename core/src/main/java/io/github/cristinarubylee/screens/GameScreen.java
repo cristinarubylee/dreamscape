@@ -22,7 +22,7 @@ public class GameScreen implements Screen {
     private static final int VELOCITY_ITERATIONS = 8;
     private static final int POSITION_ITERATIONS = 3;
     private static final float PLAYER_SPEED = 4f;
-    private static final float NIGHTMARE_SPAWN_INTERVAL = 1f;
+    private static final float NIGHTMARE_SPAWN_INTERVAL = 10;
 
     // Game reference
     private final GDXRoot game;
@@ -67,7 +67,7 @@ public class GameScreen implements Screen {
     }
 
     private void initPhysics() {
-        world = new World(new Vector2(0, 0), true);
+        world = new World(new Vector2(0, 0), false);
         collisionController = new CollisionController();
         world.setContactListener(collisionController);
         debugRenderer = new Box2DDebugRenderer();
@@ -102,7 +102,6 @@ public class GameScreen implements Screen {
 
         // Initialize object tracking
         objects = new Array<>();
-        dropTimer = NIGHTMARE_SPAWN_INTERVAL;
     }
 
     @Override
@@ -203,20 +202,24 @@ public class GameScreen implements Screen {
                 objects.add(photon);
             }
         }
-
+        photons.removeDestroyed();
         photons.update(deltaTime);
     }
 
     private void updateNightmares(float deltaTime) {
         for (NightmareQueue nightmareQueue : nightmareQueues) {
             for (Nightmare nightmare : nightmareQueue.getNightmares()) {
+                if (nightmare == null){
+                    continue;
+                }
+
                 if (nightmare.isDestroyed()) {
                     markForDestruction(nightmare.body());
                 } else {
                     objects.add(nightmare);
                 }
             }
-
+            nightmareQueue.removeDestroyed();
             nightmareQueue.update(deltaTime);
         }
     }
@@ -231,6 +234,8 @@ public class GameScreen implements Screen {
         // Remove bodies after physics step to avoid concurrent modification
         for (Body body : bodiesToDestroy) {
             if (body != null) {
+                GameObject obj = (GameObject)(body.getUserData());
+                obj.setBody(null);
                 world.destroyBody(body);
             }
         }

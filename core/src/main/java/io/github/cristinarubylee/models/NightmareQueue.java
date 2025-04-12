@@ -16,6 +16,7 @@ public class NightmareQueue {
     private Vector2 center;
     private float currentAngle = 0;
     private float speed = 2f;
+    private float radius = 2;
 
     public enum NightmareType {
         CIRCLE,
@@ -28,8 +29,8 @@ public class NightmareQueue {
         switch (nightmareType){
             case CIRCLE:
                 for (int i = 0; i < 8; i++){
-                    float tempX = MathUtils.cosDeg(i * 45);
-                    float tempY = MathUtils.sinDeg(i * 45);
+                    float tempX = radius * MathUtils.cosDeg(i * 45);
+                    float tempY = radius * MathUtils.sinDeg(i * 45);
                     nightmares.add(createNightmare(world, tempX + x, tempY + y));
                 }
             case WALL:
@@ -47,25 +48,37 @@ public class NightmareQueue {
         float angularSpeed = 10f;
         currentAngle += angularSpeed * delta;
 
+        center.add(-speed * delta, 0);
+
         for (int i = 0; i < nightmares.size; i++){
             Nightmare nightmare = nightmares.get(i);
 
-            if (nightmare.getX() < -2*nightmare.getWidth()){
-                nightmare.setDestroyed(true);
-            }
+            // Only update the nightmare if it isn't set to be destroyed
+            if (nightmare != null && !nightmare.isDestroyed() && nightmare.body != null){
 
-            if (nightmare.isDestroyed()){
-                nightmares.removeIndex(i);
-            }
-            else {
                 float angle = (currentAngle + 45 * i) + (angularSpeed * delta);
 
-                nightmare.setX(center.x + MathUtils.cosDeg(angle));
-                nightmare.setY(center.y + MathUtils.sinDeg(angle));
+//                nightmare.setX(center.x + radius * MathUtils.cosDeg(angle));
+//                nightmare.setY(center.y + radius * MathUtils.sinDeg(angle));
+//
+                Vector2 target = new Vector2(center.x + radius * MathUtils.cosDeg(angle),center.y + radius * MathUtils.sinDeg(angle) );
+                nightmare.moveTo(target);
+
+                if (nightmare.getX() < -2 * nightmare.getWidth()) {
+                    nightmare.setDestroyed(true);
+                }
             }
         }
 
-        center.add(-speed * delta, 0);
+    }
+
+    public void removeDestroyed(){
+        for (int i = nightmares.size - 1; i >= 0; i--){
+            Nightmare nightmare = nightmares.get(i);
+            if (nightmare != null && nightmare.isDestroyed()){
+                nightmares.set(i, null);
+            }
+        }
     }
 
     public Array<Nightmare> getNightmares() {

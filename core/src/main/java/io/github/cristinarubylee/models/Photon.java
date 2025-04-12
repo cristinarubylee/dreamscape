@@ -29,6 +29,8 @@ public class Photon extends GameObject{
 
         fixtureDef.shape = circle;
 
+        //fixtureDef.isSensor = true;
+
         fixtureDef.filter.categoryBits = CATEGORY_PHOTON;
         fixtureDef.filter.maskBits = MASK_PHOTON;
 

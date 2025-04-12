@@ -22,6 +22,8 @@ public class Player extends GameObject{
 
         square.setAsBox(0.5f, 0.5f);
 
+        fixtureDef.isSensor = true;
+
         fixtureDef.filter.categoryBits = CATEGORY_PLAYER;
         fixtureDef.filter.maskBits = MASK_PLAYER;
 
@@ -46,5 +48,10 @@ public class Player extends GameObject{
      */
     public void changeHealth(int x) {
         currHealth = x < 0 ? Math.max(currHealth + x, 0) : Math.min(currHealth + x, totalHealth);
+    }
+
+    @Override
+    public void setDestroyed(boolean value) {
+        System.out.println("Trying to destroy player");
     }
 }

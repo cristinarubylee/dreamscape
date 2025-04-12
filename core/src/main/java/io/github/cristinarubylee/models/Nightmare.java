@@ -25,12 +25,13 @@ public class Nightmare extends GameObject{
 
         fixtureDef.shape = circle;
 
+        fixtureDef.isSensor = true;
+
         fixtureDef.filter.categoryBits = CATEGORY_NIGHTMARE;
         fixtureDef.filter.maskBits = MASK_NIGHTMARE;
         fixtureDef.filter.groupIndex = -2;
 
         body.createFixture(fixtureDef);
-        body.setBullet(true);
         circle.dispose();
     }
 

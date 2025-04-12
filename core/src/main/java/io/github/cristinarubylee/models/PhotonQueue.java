@@ -10,41 +10,68 @@ import com.badlogic.gdx.utils.Array;
 public class PhotonQueue {
     private final Texture photonTexture;
     private final Array<Photon> photons;
-    private final float speed = 5f;
-    private final float spacing = 2f;
-    private final float lifespan = 9999f;
+    private final float speed;
+    private final float spacing;
+    private final float lifespan;
     private final World world;
 
     public PhotonQueue(World world, Texture photonTexture) {
         this.photonTexture = photonTexture;
         this.photons = new Array<>();
         this.world = world;
+
+        // Set default values for photon queue
+        speed = 5f;
+        spacing = 2f;
+        lifespan = 9999f;
     }
 
+    public PhotonQueue(World world, Texture photonTexture, float speed, float spacing, float lifespan) {
+        this.photonTexture = photonTexture;
+        this.photons = new Array<>();
+        this.world = world;
+        this.speed = speed;
+        this.spacing = spacing;
+        this.lifespan = lifespan;
+    }
     public void fire(float x, float y) {
-        if (photons.isEmpty() || (photons.get(photons.size - 1)).getX() > x + spacing){
+        // Clean up trailing null-body photons
+        while (!photons.isEmpty() && photons.peek().body() == null) {
+            photons.pop();
+        }
+
+        // Check spacing condition OR if the list is now empty
+        if (photons.isEmpty() || photons.peek().getX() > x + spacing) {
             Photon photon = new Photon(world, x, y);
             photon.setTexture(new TextureRegion(photonTexture));
             photons.add(photon);
         }
     }
 
+
     public void update(float delta) {
         for (int i = photons.size - 1; i >= 0; i--) {
             Photon photon = photons.get(i);
+
+            // Only update photon if it isn't set to be destroyed
+            if (!photon.isDestroyed() && photon.body != null){
+                if (photon.getLife() > lifespan){
+                    photon.setDestroyed(true);
+                } else if (photon.getX() > 16){
+                    photon.setDestroyed(true);
+                } else {
+                    photon.translateX(speed * delta);
+                    photon.incLife();
+                }
+            }
+        }
+    }
+
+    public void removeDestroyed() {
+        for (int i = photons.size - 1; i >= 0; i--){
+            Photon photon = photons.get(i);
             if (photon.isDestroyed()){
                 photons.removeIndex(i);
-            }
-            if (photon.getLife() > lifespan){
-                photon.setDestroyed(true);
-            }
-
-            if (photon.getX() > 16){
-                photon.setDestroyed(true);
-            }
-            else {
-                photon.translateX(speed * delta);
-                photon.incLife();
             }
         }
     }

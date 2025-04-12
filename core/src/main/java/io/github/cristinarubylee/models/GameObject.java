@@ -85,26 +85,55 @@ public abstract class GameObject {
     }
 
 
-    /** Returns the x position of the object's bottom left corner */
     public float getX() {
         return body.getPosition().x;
-    }
-
-    public void setX(float value) {
-        body.setTransform(value, body.getPosition().y, body.getAngle());
     }
 
     public float getY() {
         return body.getPosition().y;
     }
 
+    public Vector2 getPosition(){
+        return  body.getPosition();
+    }
+
     public void setY(float value) {
         body.setTransform(body.getPosition().x, value, body.getAngle());
+    }
+
+    public void setX(float value) {
+        body.setTransform(value, body.getPosition().y, body.getAngle());
     }
 
     public void setPosition(Vector2 value) {
         body.setTransform(value, body.getAngle());
     }
+
+
+//    // Applies a force to move the body to a specific location rather than directly transforming
+//    public void moveTo(Vector2 value){
+//        Vector2 currentPos = new Vector2(this.getX(), this.getY());
+//        Vector2 direction = value.sub(currentPos);
+//        System.out.println(direction);
+//        body.setLinearVelocity(direction.scl(10f));
+//        //body.applyForceToCenter(direction.scl(10f), true);
+//    }
+
+    public void moveTo(Vector2 target) {
+        Vector2 current = body.getPosition();
+        Vector2 desired = (new Vector2(target)).sub(current);
+
+        float distance = desired.len();
+        if (distance < 0.1f) {
+            body.setLinearVelocity(0, 0);
+            return;
+        }
+
+        Vector2 currentVelocity = body.getLinearVelocity();
+//        Vector2 newVelocity = currentVelocity.lerp(desired.nor().scl(5f), 1);
+        body.setLinearVelocity(desired.nor().scl(2f));
+    }
+
 
     public void translateX(float value) {
         body.setTransform(value + body.getPosition().x, body.getPosition().y, body.getAngle());
@@ -124,6 +153,10 @@ public abstract class GameObject {
 
     public void setDestroyed(boolean value) {
         isDestroyed = value;
+    }
+
+    public void setBody(Body body){
+        this.body = body;
     }
 
     public abstract ObjectType getType();
