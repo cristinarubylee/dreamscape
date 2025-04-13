@@ -16,7 +16,7 @@ public class NightmareQueue {
     private Vector2 center;
     private float currentAngle = 0;
     private float speed = 2f;
-    private float radius = 2;
+    private float radius = 1;
 
     public enum NightmareType {
         CIRCLE,

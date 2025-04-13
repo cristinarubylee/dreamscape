@@ -1,6 +1,7 @@
 package io.github.cristinarubylee.models;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
@@ -14,11 +15,13 @@ public class PhotonQueue {
     private final float spacing;
     private final float lifespan;
     private final World world;
+    private final Sound photonSound;
 
-    public PhotonQueue(World world, Texture photonTexture) {
+    public PhotonQueue(World world, Texture photonTexture, Sound photonSound) {
         this.photonTexture = photonTexture;
         this.photons = new Array<>();
         this.world = world;
+        this.photonSound = photonSound;
 
         // Set default values for photon queue
         speed = 5f;
@@ -26,8 +29,9 @@ public class PhotonQueue {
         lifespan = 9999f;
     }
 
-    public PhotonQueue(World world, Texture photonTexture, float speed, float spacing, float lifespan) {
+    public PhotonQueue(World world, Texture photonTexture, float speed, float spacing, float lifespan, Sound photonSound) {
         this.photonTexture = photonTexture;
+        this.photonSound = photonSound;
         this.photons = new Array<>();
         this.world = world;
         this.speed = speed;
@@ -45,6 +49,7 @@ public class PhotonQueue {
             Photon photon = new Photon(world, x, y);
             photon.setTexture(new TextureRegion(photonTexture));
             photons.add(photon);
+            photonSound.play();
         }
     }
 

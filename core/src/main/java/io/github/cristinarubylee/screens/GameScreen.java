@@ -22,7 +22,8 @@ public class GameScreen implements Screen {
     private static final int VELOCITY_ITERATIONS = 8;
     private static final int POSITION_ITERATIONS = 3;
     private static final float PLAYER_SPEED = 4f;
-    private static final float NIGHTMARE_SPAWN_INTERVAL = 10;
+    private static final float NIGHTMARE_SPAWN_INTERVAL = 2;
+    private static final String PATH_PREFIX = "assets/";
 
     // Game reference
     private final GDXRoot game;
@@ -78,13 +79,13 @@ public class GameScreen implements Screen {
 
     private void loadResources() {
         // Load images
-        backgroundTexture = new Texture("background.png");
-        bucketTexture = new Texture("bucket.png");
-        dropTexture = new Texture("drop.png");
+        backgroundTexture = game.assetManager.get(PATH_PREFIX + "background.png");
+        bucketTexture = game.assetManager.get(PATH_PREFIX + "bucket.png");
+        dropTexture = game.assetManager.get(PATH_PREFIX + "drop.png");
 
         // Load audio
-        dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.mp3"));
-        music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
+        dropSound = game.assetManager.get(PATH_PREFIX + "drop.mp3");
+        music = game.assetManager.get(PATH_PREFIX + "music.mp3");
         music.setLooping(true);
         music.setVolume(0.5f);
     }
@@ -97,7 +98,7 @@ public class GameScreen implements Screen {
         player.setTexture(new TextureRegion(bucketTexture));
 
         // Initialize projectiles and enemies
-        photons = new PhotonQueue(world, dropTexture);
+        photons = new PhotonQueue(world, dropTexture, dropSound);
         nightmareQueues = new Array<>();
 
         // Initialize object tracking
@@ -106,7 +107,6 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
-        // Uncomment to start music
          music.play();
     }
 
