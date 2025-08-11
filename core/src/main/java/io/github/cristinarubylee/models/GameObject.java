@@ -109,30 +109,20 @@ public abstract class GameObject {
         body.setTransform(value, body.getAngle());
     }
 
-
-//    // Applies a force to move the body to a specific location rather than directly transforming
-//    public void moveTo(Vector2 value){
-//        Vector2 currentPos = new Vector2(this.getX(), this.getY());
-//        Vector2 direction = value.sub(currentPos);
-//        System.out.println(direction);
-//        body.setLinearVelocity(direction.scl(10f));
-//        //body.applyForceToCenter(direction.scl(10f), true);
+//    public void moveTo(Vector2 target) {
+//        Vector2 current = body.getPosition();
+//        Vector2 desired = (new Vector2(target)).sub(current);
+//
+//        float distance = desired.len();
+//        if (distance < 0.1f) {
+//            body.setLinearVelocity(0, 0);
+//            return;
+//        }
+//
+//        Vector2 currentVelocity = body.getLinearVelocity();
+////        Vector2 newVelocity = currentVelocity.lerp(desired.nor().scl(5f), 1);
+//        body.setLinearVelocity(desired.nor().scl(2f));
 //    }
-
-    public void moveTo(Vector2 target) {
-        Vector2 current = body.getPosition();
-        Vector2 desired = (new Vector2(target)).sub(current);
-
-        float distance = desired.len();
-        if (distance < 0.1f) {
-            body.setLinearVelocity(0, 0);
-            return;
-        }
-
-        Vector2 currentVelocity = body.getLinearVelocity();
-//        Vector2 newVelocity = currentVelocity.lerp(desired.nor().scl(5f), 1);
-        body.setLinearVelocity(desired.nor().scl(2f));
-    }
 
 
     public void translateX(float value) {

@@ -26,7 +26,7 @@ public class PhotonQueue {
         // Set default values for photon queue
         speed = 5f;
         spacing = 2f;
-        lifespan = 9999f;
+        lifespan = 50f;
     }
 
     public PhotonQueue(World world, Texture photonTexture, float speed, float spacing, float lifespan, Sound photonSound) {

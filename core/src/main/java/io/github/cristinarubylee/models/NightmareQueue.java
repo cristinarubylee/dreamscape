@@ -15,7 +15,7 @@ public class NightmareQueue {
 
     private Vector2 center;
     private float currentAngle = 0;
-    private float speed = 2f;
+    private float speed = 5f; // Represents bullets shot per second
     private float radius = 1;
 
     public enum NightmareType {
@@ -45,8 +45,8 @@ public class NightmareQueue {
     }
 
     public void update(float delta){
-        float angularSpeed = 10f;
-        currentAngle += angularSpeed * delta;
+        float angularSpeed = 100f;
+        currentAngle = (currentAngle + angularSpeed * delta) % 360;
 
         center.add(-speed * delta, 0);
 
@@ -56,13 +56,18 @@ public class NightmareQueue {
             // Only update the nightmare if it isn't set to be destroyed
             if (nightmare != null && !nightmare.isDestroyed() && nightmare.body != null){
 
-                float angle = (currentAngle + 45 * i) + (angularSpeed * delta);
+                float angle = (currentAngle + 45 * i);
 
-//                nightmare.setX(center.x + radius * MathUtils.cosDeg(angle));
-//                nightmare.setY(center.y + radius * MathUtils.sinDeg(angle));
-//
-                Vector2 target = new Vector2(center.x + radius * MathUtils.cosDeg(angle),center.y + radius * MathUtils.sinDeg(angle) );
-                nightmare.moveTo(target);
+                nightmare.setX(center.x + radius * MathUtils.cosDeg(angle));
+                nightmare.setY(center.y + radius * MathUtils.sinDeg(angle));
+
+
+                // Applying force leads to over-shooting: creates creepy, almost organic movement!!
+//                float force = 3f;
+//                Vector2 target = new Vector2(center.x + radius * MathUtils.cosDeg(angle),center.y + radius * MathUtils.sinDeg(angle) );
+//                Vector2 currentPos = new Vector2(nightmare.getX(), nightmare.getY());
+//                Vector2 direction = target.sub(currentPos);
+//                nightmare.body().applyForceToCenter(direction.scl(force), true);
 
                 if (nightmare.getX() < -2 * nightmare.getWidth()) {
                     nightmare.setDestroyed(true);

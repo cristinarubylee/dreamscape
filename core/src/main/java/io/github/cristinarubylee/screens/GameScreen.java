@@ -173,7 +173,7 @@ public class GameScreen implements Screen {
         objects.add(player);
 
         // Clamp player position within the screen bounds
-        player.setY(MathUtils.clamp(player.getY(), 0, worldHeight - playerHeight));
+        player.setY(MathUtils.clamp(player.getY(), playerHeight/2, worldHeight - playerHeight/2));
 
         // Update game objects
         updateNightmares(deltaTime);
