@@ -15,6 +15,7 @@ import com.badlogic.gdx.utils.*;
 import io.github.cristinarubylee.GDXRoot;
 import io.github.cristinarubylee.controllers.*;
 import io.github.cristinarubylee.models.*;
+import io.github.cristinarubylee.util.ParallaxBackground;
 
 public class GameScreen implements Screen {
     // Constants
@@ -45,6 +46,7 @@ public class GameScreen implements Screen {
     private float dropTimer;
     private boolean debugMode;
     private boolean pause;
+    private ParallaxBackground bg;
 
     // Controllers
     private InputController control;
@@ -103,6 +105,11 @@ public class GameScreen implements Screen {
 
         // Initialize object tracking
         objects = new Array<>();
+
+        // Initialize parallax
+        bg = new ParallaxBackground(10, camera, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        bg.addLayer(3f, backgroundTexture);
+
     }
 
     @Override
@@ -174,6 +181,7 @@ public class GameScreen implements Screen {
 
         // Clamp player position within the screen bounds
         player.setY(MathUtils.clamp(player.getY(), playerHeight/2, worldHeight - playerHeight/2));
+        player.setX(MathUtils.clamp(player.getX(), playerHeight/2, worldWidth - playerHeight/2));
 
         // Update game objects
         updateNightmares(deltaTime);
@@ -181,6 +189,8 @@ public class GameScreen implements Screen {
 
         // Handle spawning new nightmares
         spawnNightmares(deltaTime, worldWidth, worldHeight);
+
+        bg.translateX(deltaTime);
     }
 
     private void spawnNightmares(float deltaTime, float worldWidth, float worldHeight) {
@@ -245,15 +255,17 @@ public class GameScreen implements Screen {
     private void draw() {
         ScreenUtils.clear(Color.BLACK);
         game.viewport.apply();
-        game.batch.setProjectionMatrix(game.viewport.getCamera().combined);
 
+        bg.draw(game.batch);
+
+        game.batch.setProjectionMatrix(game.viewport.getCamera().combined);
         game.batch.begin();
 
         float worldWidth = game.viewport.getWorldWidth();
         float worldHeight = game.viewport.getWorldHeight();
 
         // Draw background
-        game.batch.draw(backgroundTexture, 0, 0, worldWidth, worldHeight);
+//        game.batch.draw(backgroundTexture, 0, 0, worldWidth, worldHeight);
 
         // Draw UI elements
         game.font.draw(game.batch, "Player Health: " + player.getCurrHealth(), 0, worldHeight);
